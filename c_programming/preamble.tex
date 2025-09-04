@@ -1,8 +1,14 @@
 %%% Setup fonts.
 \usepackage{fontspec}
-\setmainfont{Iosevka Etoile}
-\setsansfont{Iosevka Aile}
-\setmonofont{Iosevka}
+%% Fancy fonts
+% \setmainfont{Iosevka Etoile}
+% \setsansfont{Iosevka Aile}
+% \setmonofont{Iosevka}
+
+%% Default fonts
+\setmainfont{CMU Serif}
+\setsansfont{CMU Sans Serif}
+\setmonofont{CMU Typewriter Text}
 
 %% Math
 \usepackage{amsmath, amsfonts, amsthm, mathtools} % Advanced math tools.
@@ -15,7 +21,8 @@
             mathtools-overbracket
         }
 }
-\setmathfont{Lete Sans Math}[CharacterVariant={3,6},StylisticSet={4}]
+% \setmathfont{Lete Sans Math}[CharacterVariant={3,6},StylisticSet={4}]
+\setmathfont{Latin Modern Math}
 
 %%% Language settings.
 \usepackage{polyglossia}
