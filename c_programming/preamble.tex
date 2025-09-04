@@ -1,0 +1,44 @@
+%%% Setup fonts.
+\usepackage{fontspec}
+\setmainfont{Iosevka Etoile}
+\setsansfont{Iosevka Aile}
+\setmonofont{Iosevka}
+
+%% Math
+\usepackage{amsmath, amsfonts, amsthm, mathtools} % Advanced math tools.
+\usepackage{amssymb}
+
+\usepackage{unicode-math} % Allow TTF and OTF fonts in math and allow direct typing unicode math characters.
+\unimathsetup{
+    warnings-off={
+            mathtools-colon,
+            mathtools-overbracket
+        }
+}
+\setmathfont{Lete Sans Math}[CharacterVariant={3,6},StylisticSet={4}]
+
+%%% Language settings.
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+\setotherlanguage{english}
+
+%%% Beamer settings
+% Themes
+\usetheme{Boadilla}
+\useinnertheme{circles}
+\usecolortheme[style=Latte, accent=Blue]{catppuccin}
+% Templates
+\setbeamertemplate{navigation symbols}{} %remove navigation symbols
+\setbeamertemplate{page number in head/foot}[appendixframenumber]
+\setbeamertemplate{title page}[default][colsep=-4bp,rounded=true]
+
+%%% Colors
+\hypersetup{colorlinks}
+\usepackage{catppuccinpalette}
+
+\usepackage{booktabs}
+
+\usepackage{minted}
+\usemintedstyle{catppuccin-latte}
+
+\usepackage{csquotes}

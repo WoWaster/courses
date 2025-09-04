@@ -1,0 +1,8 @@
+$ gcc 01_basic_c.c -Wall -o 01_basic_c
+
+$ ls -l 01_basic_c
+-rwxr-xr-x 1 wowaster wowaster 15456 сен  3 12:38 01_basic_c
+
+$ ./01_basic_c
+displaying 3
+displaying 8

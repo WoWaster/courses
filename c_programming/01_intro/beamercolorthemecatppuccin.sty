@@ -1,0 +1,172 @@
+%%
+%% This is file `beamercolorthemecatppuccin.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% beamercolorthemecatppuccin.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (c) 2025 Catppuccin
+%% 
+%% Permission is hereby granted, free of charge, to any person obtaining a copy
+%% of this software and associated documentation files (the "Software"), to deal
+%% in the Software without restriction, including without limitation the rights
+%% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+%% copies of the Software, and to permit persons to whom the Software is
+%% furnished to do so, subject to the following conditions:
+%% 
+%% The above copyright notice and this permission notice shall be included in all
+%% copies or substantial portions of the Software.
+%% 
+%% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+%% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+%% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+%% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+%% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+%% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+%% SOFTWARE.
+%% 
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{beamercolorthemecatppuccin}
+    [2025/07/19 v1.2.0 catppuccin beamer color theme]
+
+\@ifclassloaded{beamer}{
+\mode<presentation>
+\newif\ifbeamer@catppuccintheme@blacktext
+\newif\ifbeamer@catppuccintheme@whitetext
+\DeclareOptionBeamer{style}{\def\beamer@catppuccintheme@style{#1}}
+\DeclareOptionBeamer{accent}{\def\beamer@catppuccintheme@accent{#1}}
+\DeclareOptionBeamer{blacktext}{\csname beamer@catppuccintheme@blacktext#1\endcsname}
+\DeclareOptionBeamer{whitetext}{\csname beamer@catppuccintheme@whitetext#1\endcsname}
+\DeclareOptionBeamer{paletteOpts}{\def\beamer@catppuccintheme@paletteOpts{#1}}
+\ExecuteOptionsBeamer{style=Latte,paletteOpts=,accent=Green,blacktext=false,whitetext=false} % set default
+\ProcessOptionsBeamer
+\RequirePackage[\beamer@catppuccintheme@paletteOpts]{catppuccinpalette}
+\setbeamercolor*{structure}{
+  bg=Ctp\beamer@catppuccintheme@style\beamer@catppuccintheme@accent !20,
+  fg=Ctp\beamer@catppuccintheme@style\beamer@catppuccintheme@accent
+}
+\ifbeamer@catppuccintheme@blacktext
+\setbeamercolor*{normal text}{
+  bg=Ctp\beamer@catppuccintheme@style Base,
+  fg=black
+}
+\setbeamercolor*{section in toc}{
+  fg=black,
+  bg=Ctp\beamer@catppuccintheme@style Base
+}
+\else\ifbeamer@catppuccintheme@blacktext
+\setbeamercolor*{normal text}{
+  bg=Ctp\beamer@catppuccintheme@style Base,
+  fg=white
+}
+\setbeamercolor*{section in toc}{
+  fg=white,
+  bg=Ctp\beamer@catppuccintheme@style Base
+}
+\else
+\setbeamercolor*{normal text}{
+  bg=Ctp\beamer@catppuccintheme@style Base,
+  fg=Ctp\beamer@catppuccintheme@style Text
+}
+\setbeamercolor*{section in toc}{
+  fg=Ctp\beamer@catppuccintheme@style Text,
+  bg=Ctp\beamer@catppuccintheme@style Base
+}
+\fi\fi
+\setbeamercolor*{alerted text}{
+  use=structure,
+  fg=structure.fg!80!gray
+}
+\setbeamercolor*{palette primary}{
+  use=structure,
+  fg=structure.fg!60!Ctp\beamer@catppuccintheme@style Text,
+  bg=Ctp\beamer@catppuccintheme@style Surface2
+}
+\setbeamercolor*{palette secondary}{
+  use=structure,
+  fg=structure.fg!70!Ctp\beamer@catppuccintheme@style Text,
+  bg=Ctp\beamer@catppuccintheme@style Surface1
+}
+\setbeamercolor*{palette tertiary}{
+  use=structure,
+  bg=structure.fg!80!Ctp\beamer@catppuccintheme@style Text,
+  fg=Ctp\beamer@catppuccintheme@style Surface0
+}
+\setbeamercolor*{palette quaternary}{
+  use=structure,
+  fg=structure.fg,
+  bg=Ctp\beamer@catppuccintheme@style Mantle
+}
+\setbeamercolor*{sidebar}{
+  use=structure,
+  fg=structure.fg,
+  bg=Ctp\beamer@catppuccintheme@style Crust
+}
+\setbeamercolor*{palette sidebar primary}{
+  use=structure,
+  fg=structure.fg!10!Ctp\beamer@catppuccintheme@style Text
+}
+\setbeamercolor*{palette sidebar secondary}{
+  use=structure,
+  fg=structure.fg!20!Ctp\beamer@catppuccintheme@style Text
+}
+\setbeamercolor*{palette sidebar tertiary}{
+  use=structure,
+  fg=structure.fg!30!Ctp\beamer@catppuccintheme@style Text
+}
+\setbeamercolor*{palette sidebar quaternary}{
+  use=structure,
+  fg=structure.fg!40!Ctp\beamer@catppuccintheme@style Text
+}
+\setbeamercolor*{titlelike}{
+  bg=Ctp\beamer@catppuccintheme@style Base,
+  fg=Ctp\beamer@catppuccintheme@style\beamer@catppuccintheme@accent
+}
+\setbeamercolor*{frametitle}{
+  bg=gray!10!Ctp\beamer@catppuccintheme@style Base
+}
+\setbeamercolor*{frametitle right}{
+  bg=gray!60!Ctp\beamer@catppuccintheme@style Base
+}
+\setbeamercolor*{separation line}{}
+\setbeamercolor*{fine separation line}{}
+\setbeamercolor{block title}{
+  use=structure,
+  fg=Ctp\beamer@catppuccintheme@style Base,
+  bg=structure.fg!75!Ctp\beamer@catppuccintheme@style Text
+}
+\setbeamercolor{block title alerted}{
+  use=alerted text,
+  fg=Ctp\beamer@catppuccintheme@style Base,
+  bg=alerted text.fg!75!Ctp\beamer@catppuccintheme@style Text
+}
+\setbeamercolor{block title example}{
+  use=example text,
+  fg=Ctp\beamer@catppuccintheme@style Base,
+  bg=example text.fg!75!Ctp\beamer@catppuccintheme@style Text
+}
+\setbeamercolor{block body}{
+  parent=normal text,
+  use=block title,
+  bg=block title.bg!10!bg
+}
+\setbeamercolor{block body alerted}{
+  parent=normal text,
+  use=block title alerted,
+  bg=block title alerted.bg!10!bg
+}
+\setbeamercolor{block body example}{
+  parent=normal text,
+  use=block title example,
+  bg=block title example.bg!10!bg
+}
+\renewcommand{\emph}[1]{{\usebeamercolor[fg]{structure}#1}}
+\mode<all>
+}
+
+\endinput
+%%
+%% End of file `beamercolorthemecatppuccin.sty'.
