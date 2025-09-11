@@ -1,0 +1,140 @@
+% !TEX TS-program = lualatex
+
+% Основано на презентации Юрия Викторовича Литвинова
+% https://github.com/yurii-litvinov/courses/tree/master/programming-1st-semester/03-styleguide
+\documentclass[aspectratio=169]{beamer}
+
+\input{../preamble.tex}
+
+%%% Meta
+
+\title{Стайлгайд}
+\author{Николай Пономарев}
+\date{11 сентября 2025 г.}
+\titlegraphic{\includegraphics[height=1cm]{../фирменный блок_серый.pdf}}
+\subject{Стиль кодирования. Процесс сборки и запуска программы — компилятор, линковщик, IDE. Практика, написание первых программ на C.}
+
+\begin{document}
+
+\begin{frame}[plain, noframenumbering]
+    \titlepage
+\end{frame}
+
+\begin{frame}
+    \frametitle{Что такое красивый код?}
+
+    \begin{exampleblock}{Общее правило хорошего кода}
+        Программы пишутся для людей, а не для компьютера
+    \end{exampleblock}
+
+    \vspace{1em}
+
+    \begin{itemize}
+        \item Правила хорошего кода
+              \begin{itemize}
+                  \item Best practices: общие и специфические для языка
+              \end{itemize}
+        \item Консистентное форматирование в соответствии с инструкцией
+              \begin{itemize}
+                  \item Использование code style и форматеров
+              \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Правила хорошего кода}
+
+    \begin{itemize}
+        \item \enquote{Школьник-стайл} именования переменных (a, b, c1)
+        \item Компилироваться без предупреждений
+              \begin{itemize}
+                  \item используйте флаги компилятора: \texttt{-Wall -Wextra -pedantic}
+              \end{itemize}
+        \item Не должно быть копипаста
+        \item Одна сущность должна играть одну роль в программе
+              \begin{itemize}
+                  \item Одна функция должна делать одно дело
+                  \item Одна переменная должна означать что-то одно
+              \end{itemize}
+        \item По возможности сужайте области видимости переменных
+        \item Используйте самые узкие типы из подходящих
+        \item Переменные --- это плохо, константы --- хорошо
+        \item Глобальные переменные --- это очень, очень плохо
+        \item goto --- это вообще ужасно
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Форматирование кода}
+
+    \begin{itemize}
+        \item Отступы!
+        \item Пробелы!
+        \item Правила именования
+              \begin{itemize}
+                  \item Переменные со строчной, типы с заглавной
+                  \item camelCase
+              \end{itemize}
+        \item Один оператор на одной строке%, и побольше фигурных скобок
+        \item Бинарные операторы и ключевые слова выделяются пробелами
+              % \item Стайлгайд выложен на HwProj, прочитайте и следуйте
+    \end{itemize}
+
+    \begin{exampleblock}{Стиль кода для Си}<2>
+        В курсе будем использовать стиль WebKit
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Один из друзей программиста~--- форматер}
+
+    \begin{itemize}
+        \item Многие вещи из code style~--- дело техники
+        \item Современный программист пользуется большим количеством инструментов
+        \item Форматер один из из них
+        \item Для Си будем использовать ClangFormat
+    \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Домашнее задание}
+
+    \begin{enumerate}
+        \item Написать программу, считающую значение формулы $x^4 + x^3 + x^2 + x + 1$ за два умножения
+        \item Написать программу нахождения неполного частного от деления $a$ на $b$ (целые числа), используя только операции сложения, вычитания и умножения
+        \item Дан массив целых чисел $x[1] \dots x[m + n]$, рассматриваемый как соединение двух его отрезков: начала $x[1] \dots x[m]$ длины $m$ и конца $x[m + 1] \dots x[m + n]$ длины $n$.
+              Не используя дополнительных массивов, переставить начало и конец %(обращением двух частей массива, а потом его самого)
+        \item Посчитать число \enquote{счастливых билетов} (билет считается \enquote{счастливым}, если сумма первых трёх цифр его номера равна сумме трёх последних), подсчётом числа билетов с заданной суммой трёх цифр
+    \end{enumerate}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Полезные ссылки}
+
+    \begin{itemize}
+        \item WebKit Code Style Guidelines
+              \begin{itemize}
+                  \item \url{https://webkit.org/code-style-guidelines/}
+                  \item Прочитайте целиком, но фильтруйте информации о C++ и Objective-C
+              \end{itemize}
+        \item ClangFormat~--- форматер для Си
+              \begin{itemize}
+                  \item \url{https://clang.llvm.org/docs/ClangFormat.html}
+                  \item Настройте его в своей любимой среде
+                  \item В Visual Studio: \url{https://learn.microsoft.com/en-us/visualstudio/ide/reference/options-text-editor-c-cpp-formatting?view=vs-2022}
+              \end{itemize}
+        \item Правила хорошего кода от Юрия Викторовича Литвинова
+              \begin{itemize}
+                  \item \url{https://github.com/yurii-litvinov/courses/blob/master/programming-1st-semester/styleguide.md}
+                  \item Местами не сответствует стилю WebKit, игнорируйте
+              \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\end{document}
