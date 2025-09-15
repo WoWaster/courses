@@ -1,0 +1,7 @@
+$ gcc -v hello.c -o hello
+...
+gcc version 15.2.1 20250813 (GCC)
+(1) /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/cc1 -quiet -v hello.c -quiet -dumpbase hello.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -o /tmp/ccLNELT3.s
+GNU C23 (GCC) version 15.2.1 20250813 (x86_64-pc-linux-gnu)
+(2) as -v --64 -o /tmp/cc8JjKnv.o /tmp/ccLNELT3.s
+(3) /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/collect2 ...

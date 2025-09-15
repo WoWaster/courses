@@ -1,0 +1,25 @@
+---
+config:
+  flowchart:
+    defaultRenderer: "elk"
+---
+flowchart LR
+
+    c@{ shape: doc, label: "hello.c" }
+    headers@{ shape: docs, label: "заголовочные\nфайлы" } 
+    cpp:::app@{shape: rounded, label: "препроцессор" }
+    i@{ shape: doc, label: "hello.i" }
+    o@{ shape: doc, label: "hello.o" }
+    libs@{ shape: docs, label: "библиотеки" } 
+    ld:::app@{shape: rounded, label: "компоновщик" }
+    a@{ shape: doc, label: "a.out" }
+
+    cc1:::app@{shape: rounded, label: "компилятор" }
+    s@{ shape: doc, label: "hello.s" }
+    as:::app@{shape: rounded, label: "ассемблер" }
+
+    c --> cpp --> i --> cc1 --> s --> as ---> o --> ld --> a
+    headers --> cpp
+    libs --> ld
+
+    classDef app fill:#DDD;

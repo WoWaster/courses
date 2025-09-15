@@ -9,5 +9,6 @@
     ],
     "cSpell.words": [
         "сответствует"
-    ]
+    ],
+    "clang-format.style": "WebKit"
 }
