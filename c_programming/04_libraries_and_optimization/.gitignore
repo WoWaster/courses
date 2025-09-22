@@ -1,0 +1,7 @@
+workdir/**
+!workdir/**/**
+workdir/prime/**
+!workdir/prime/main.c
+!workdir/prime/prime.c
+!workdir/prime/prime.h
+!workdir/rootOf3.c

@@ -1,0 +1,291 @@
+% !TEX TS-program = lualatex
+
+% Основано на презентации Анны Игоревны Васениной и Владимира Александровича Кутуева
+% А также презентации Юрия Викторовича Литвинова: https://github.com/yurii-litvinov/courses/tree/master/programming-1st-semester/09-structs-modules-files
+\documentclass[aspectratio=169]{beamer}
+
+\input{../preamble.tex}
+
+%%% Meta
+
+\title{Библиотеки и оптимизации}
+\author{Николай Пономарев}
+\date{22 сентября 2025 г.}
+\titlegraphic{\includegraphics[height=1cm]{../фирменный блок_серый.pdf}}
+\subject{Подключение библиотек. Статическая и динамическая линковка. Среда исполнения языка программирования. Флаги оптимизации -O1, -O2, -O3, -Os.}
+
+\begin{document}
+
+\begin{frame}[plain, noframenumbering]
+    \titlepage
+\end{frame}
+
+\begin{frame}
+    \frametitle{Про сдачу домашек}
+
+    В курсе по Python Вас научили пользоваться Git и GitHub
+
+    \begin{itemize}
+        \item Каждая домашняя работа оформляется как Pull Request в свой репозиторий
+        \item Добавьте преподавателя в коллабораторы
+        \item Одно задание~--- один PR
+        \item Следите за оформлением кода, коммитов, комментариев и т.д.
+        \item Дедлайн будем считать по дате запроса review (вдруг HwProj опять устанет)
+    \end{itemize}
+
+    \begin{alertblock}{Важно}
+        Начиная с этой домашки в HwProj должна быть ссылка на Pull Request!
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Библиотеки}
+
+    \begin{itemize}
+        \item Многие задачи решали до Вас неоднократно
+        \item Такие готовые решения принято называть \enquote{библиотеками}
+        \item Иногда требуется создавать свои библиотеки
+        \item Чаще~--- достаточно использовать уже готовые
+    \end{itemize}
+
+    \begin{block}{Определение}<2>
+        \textit{Библиотекой} в Си называют набор заголовочных файлов, доступных другим приложениям, и файлов с реализацией объявлений из соответствующего заголовочного файла.
+        Это могут быть как .c-файлы, так и уже прекомпилированные файлы.
+    \end{block}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Стандартные библиотеки в Си}
+
+    На самом деле Вы использовали уже довольно много разных библиотек:
+    \begin{description}
+        \item[stdio.h] printf, scanf, ...
+        \item[stdlib.h] malloc, calloc, free, ...
+        \item[math.h] abs, sin, cos, ...
+        \item[string.h] strcmp, strcpy, ...
+        \item[stdbool.h] true, false, ...
+        \item[] ...
+    \end{description}
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Связывание со стандартными библиотеками}
+
+    Большая часть функций живёт в libc, однако математика живёт в libm
+    \inputminted{c}{workdir/rootOf3.C}
+    Нужно собирать как \texttt{gcc -Wall -Wextra -pedantic rootOf3.c -lm -o rootOf3}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Модули}
+    \begin{itemize}
+        \item Способ группировки кода в логически обособленные группы
+        \item В C это реализуется с помощью заголовочных файлов и файлов с реализацией
+              \begin{itemize}
+                  \item .h и .c
+              \end{itemize}
+        \item В отдельный модуль выносятся объявления типов данных и функции, которые делают одно дело
+              \begin{itemize}
+                  \item Например, разные функции сортировки
+                  \item Или всё для работы с матрицами
+              \end{itemize}
+        \item В интерфейсную часть модуля выносится только то, что может использовать другой код
+              \begin{itemize}
+                  \item Меньше знаешь --- крепче спишь
+              \end{itemize}
+        \item Функции, используемые только для реализации, пишутся только в .c-файле
+              \begin{itemize}
+                  \item Например, функция разделения массива для быстрой сортировки или swap
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Модули}
+
+    \begin{columns}[t]
+        \begin{column}{0.45\linewidth}
+            Заголовочный файл:
+            \begin{minted}{c}
+#pragma once
+
+// Комментарий к функции 1
+int functionOne(int x, int y);
+
+// Комментарий к функции 2
+void functionTwo();
+            \end{minted}
+        \end{column}
+        \begin{column}{0.45\linewidth}
+            .c-файл:
+            \begin{minted}{c}
+#include <имя заголовочного файла.h>
+
+#include <все остальные библиотеки>
+
+int functionOne(int x, int y)
+{
+    ...
+}
+
+void functionTwo()
+{
+    ...
+}
+
+            \end{minted}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Тонкости}
+    \begin{itemize}
+        \item Реализации функций в .h-файле писать нельзя
+              \begin{itemize}
+                  \item Иначе будет беда, если один .h-ник подключат в два .c-шника
+              \end{itemize}
+        \item Комментарии обязательны
+        \item \texttt{\#pragma once} обязательна
+        \item Подключать \enquote{свой} заголовочный файл в .c обязательно
+        \item Файлы .h/.c всегда ходят парами, кроме файла с main
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Пример простой собственной библиотеки}
+
+    См. \texttt{workdir/prime}
+
+    \begin{minted}{console}
+$ gcc -Wall -Wextra -pedantic main.c -o main
+/usr/bin/ld: /tmp/cc4YmGLo.o: in function `main':
+main.c:(.text+0x3f): undefined reference to `isPrime'
+collect2: error: ld returned 1 exit status
+    \end{minted}
+
+    Не выйдет!
+    Нужно так:
+    \begin{minted}{console}
+$ gcc -Wall -Wextra -pedantic prime.c -c
+$ gcc -Wall -Wextra -pedantic prime.o main.c -o main
+    \end{minted}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Статическая линковка}
+
+    Способ линковки, при котором библиотеки встраиваются в исполняемый файл
+
+    Плюсы:
+    \begin{itemize}
+        \item Высокая переносимость
+        \item Повышенная безопасность
+        \item Скорость исполнения
+    \end{itemize}
+    Минусы:
+    \begin{itemize}
+        \item Увеличение размера исполняемого файла
+        \item Сложность управления версиями библиотек
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Динамическая линковка}
+
+    Способ связывания, при котором система загружает библиотеки по ходу исполнения программы
+
+    Плюсы:
+    \begin{itemize}
+        \item Меньший размер исполняемого файла
+        \item \enquote{Простота} управления версиями библиотек
+    \end{itemize}
+    Минусы:
+    \begin{itemize}
+        \item Проблемы с переносимостью
+        \item Временные затраты на поиск и загрузку библиотек по ходу исполнения
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Динамическая линковка vs. Статическая линковка}
+
+    \inputminted[breaklines]{console}{sizes.txt}
+
+\end{frame}
+
+% \begin{frame}
+%     \frametitle{\enquote{DLL Hell}}
+
+
+
+%     Приложение A использует библиотеку L версии 2.0 и устанавливает её в систему.
+
+%     Приложение B использует библиотеку L
+
+% \end{frame}
+
+\begin{frame}
+    \frametitle{Компиляторные оптимизации}
+
+    \texttt{gcc -O1 -O2 -O3 ...}
+
+    \begin{itemize}
+        \item раскрытие циклов (избавление от условных переходов)
+        \item замена инструкций (умножение на 2 эквивалентно битовому сдвигу)
+        \item раскрытие внутренних методов (избавление от вызовов подпрограмм)
+        \item использование SSE (одновременная обработка блоков данных)
+        \item ...
+    \end{itemize}
+
+    \texttt{gcc -Os}~--- оптимизация по размеру
+
+    Compiler Explorer: \url{https://godbolt.org/}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Домашнее задание}
+
+    Реализовать приложение, сортирующее поступающий в стандартный поток ввода набор целых чисел (не более 100 штук, это гарантируется).
+    Числа разделены пробелами, последним символом является перенос строки.
+
+    Процедура сортировки должна быть реализована на языке ассемблера \textit{достаточно оптимальным образом}.
+    Кодом возврата приложения является количество элементов, участвовавших в сортировке и изменивших свою позицию.
+
+    Дополнительные соглашения:
+    \begin{itemize}
+        \item Чтение поступающих на вход сортируемых элементов необходимо производить с помощью команды \texttt{scanf(...)}.
+        \item Файлы с кодом приложения должны иметь расширение \texttt{.c}, файл с реализацией сортировки на ассемблере должен иметь расширение \texttt{.s}.
+    \end{itemize}
+
+    \alert{Не забудьте приложить инструкцию по сборке!}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Полезные ссылки}
+
+    \begin{itemize}
+        \item C FAQ: \enquote{I'm wondering what to put in .c files and what to put in .h files. (What does ".h" mean, anyway?)}
+              \begin{itemize}
+                  \item \url{https://c-faq.com/cpp/hfiles.html}
+              \end{itemize}
+        \item How to handle dynamic and static libraries in Linux
+              \begin{itemize}
+                  \item \url{https://opensource.com/article/20/6/linux-libraries}
+                  \item Статья для тех, кто хочет понять, как создавать библиотеки пригодные для связывания
+              \end{itemize}
+        \item Про компоновку, dependency hell и обратную совместимость
+              \begin{itemize}
+                  \item \url{https://habr.com/ru/articles/220961/}
+                  \item Про то, к каким побочным эффектам может приводить повсеместное бездумное использование динамической линковки и как их можно лечить
+              \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\end{document}
