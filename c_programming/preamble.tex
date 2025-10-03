@@ -51,3 +51,7 @@
 \usepackage{csquotes}
 
 % \usepackage{xurl}
+
+%% Custom commands
+\NewDocumentCommand{\attribution}{mmmmm}{\href{#1}{#2}, \href{#3}{#4}, #5}
+\NewDocumentCommand{\attributionCCThreeWikimedia}{mm}{\attribution{#1}{#2}{https://creativecommons.org/licenses/by-sa/3.0}{CC BY-SA 3.0}{via Wikimedia Commons}}
