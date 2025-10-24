@@ -1,0 +1,149 @@
+\documentclass[12pt]{scrartcl}
+
+%%% Fonts and language setup.
+\usepackage{polyglossia}
+% Setup fonts.
+\usepackage{fontspec}
+\setmainfont{CMU Serif}
+\setsansfont{CMU Sans Serif}
+\setmonofont{Iosevka}
+
+\usepackage{microtype} % Add fancy-schmancy font tricks
+
+%%% Polyglossia setup after (nearly) everything as described in documentation.
+\setdefaultlanguage{russian}
+\setotherlanguage{english}
+
+\usepackage{csquotes}
+
+\usepackage{minted}
+
+%%% HyperRef
+\usepackage{hyperref}
+
+\title{Диагностический тест по указателям}
+\date{}
+
+\begin{document}
+
+% \pagestyle{plain}
+
+\begin{center}
+    \usekomafont{title}\huge Диагностическая работа по указателям
+\end{center}
+
+
+\begin{center}
+    \itshape
+
+    Результаты данной работы не повлияют на Вашу оценку.
+
+    Проверенные листы будут возвращены Вам.
+
+    Пишите разборчивым почерком.
+
+    Время выполнения~--- 30 минут.
+
+    Желаем удачи!
+\end{center}
+
+\begin{enumerate}
+    \item Укажите ваши ФИО: \hrulefill
+    \item Дайте определение указателя.
+
+          \noindent\makebox[\linewidth]{\rule{\linewidth}{0.4pt}}
+
+          \noindent\makebox[\linewidth]{\rule{\linewidth}{0.4pt}}
+
+          \noindent\makebox[\linewidth]{\rule{\linewidth}{0.4pt}}
+
+    \item Какой тип должен быть у переменной \texttt{y}? \hrulefill
+          \begin{minted}{c}
+int* x;
+y = *x;
+        \end{minted}
+    \item Зачем нужен нулевой указатель (\mintinline{c}|NULL|)?
+
+          \noindent\makebox[\linewidth]{\rule{\linewidth}{0.4pt}}
+
+          \noindent\makebox[\linewidth]{\rule{\linewidth}{0.4pt}}
+
+          \noindent\makebox[\linewidth]{\rule{\linewidth}{0.4pt}}
+    \item Что выведет следующий код? \hrulefill
+          \begin{minted}{c}
+#include <stdio.h>
+int main(void)
+{
+    int* p, q = 42;
+    p = &q;
+    (*p)++;
+    printf("%d, %d\n", *p, q);
+    return 0;
+}
+        \end{minted}
+          %     \item Что выведет следующий код? \hrulefill
+          %           \begin{minted}{c}
+          % #include <stdio.h>
+          % int* f(void)
+          % {
+          %     int x = 8;
+          %     return &x;
+          % }
+          % int main(void)
+          % {
+          %     int* y = f();
+          %     printf("%d\n", *y);
+          %     return 0;
+          % }
+          %             \end{minted}
+    \item Запишите тип указателя на массив указателей на строки без использования нотации \mintinline{c}|[]|. \hrulefill
+    \item Дайте определение структуры.
+
+          \noindent\makebox[\linewidth]{\rule{\linewidth}{0.4pt}}
+
+          \noindent\makebox[\linewidth]{\rule{\linewidth}{0.4pt}}
+
+          \noindent\makebox[\linewidth]{\rule{\linewidth}{0.4pt}}
+          \newpage
+    \item Опишите минимум три способа обратиться к полю \mintinline{c}|name| экземпляра структуры \mintinline{c}|barsik|. \hrulefill
+
+          \noindent\makebox[\linewidth]{\rule{\linewidth}{0.4pt}}
+
+          \begin{minted}{c}
+struct Cat {
+    char name[33];
+    int age;
+};
+int main(void)
+{
+    struct Cat barsik;
+    struct Cat* barsikPtr = &barsik;
+
+    ...
+
+    return 0;
+}
+            \end{minted}
+    \item Что выведет следующий код? \hrulefill
+          \begin{minted}{c}
+#include <stdio.h>
+struct S {
+    int* sf;
+};
+int* f(struct S* s)
+{
+    return s->sf;
+}
+int main(void)
+{
+    struct S s;
+    int* y = f(&s);
+    printf("%d\n", *y);
+    return 0;
+}
+\end{minted}
+    \item Напишите функцию, которая обменивает значения двух целочисленных переменных. \textit{Сильные духом} могут написать функцию обмена значений двух строковых переменных.
+\end{enumerate}
+
+
+\end{document}
