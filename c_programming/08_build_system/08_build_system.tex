@@ -1,0 +1,353 @@
+% !TEX TS-program = lualatex
+
+% Основано на  презентациях Юрия Викторовича Литвинова:
+% https://github.com/yurii-litvinov/courses/tree/master/programming-1st-semester/18-console-and-build-systems
+\documentclass[aspectratio=169]{beamer}
+
+\input{../preamble.tex}
+
+% \usepackage{xurl}
+
+%%% Meta
+
+\title{Системы сборки}
+\author{Николай Пономарев}
+\date{27 октября 2025 г.}
+\titlegraphic{\includegraphics[height=1cm]{../фирменный блок_серый.pdf}}
+\subject{Системы сборки. Проблемы ручной сборки программ. Эволюция систем сборки. Make, CMake.}
+
+\begin{document}
+
+\begin{frame}[plain, noframenumbering]
+    \titlepage
+\end{frame}
+
+\begin{frame}{Системы сборки}
+    \begin{itemize}
+        \item Среда разработки не всегда доступна
+              \begin{itemize}
+                  \item Сборочные сервера автоматически выполняют сборку после каждого коммита, там некому открыть IDE и нажать на кнопку \enquote{запустить}
+              \end{itemize}
+        \item Воспроизводимость сборки
+              \begin{itemize}
+                  \item Если чтобы собрать программу надо открыть проект, скопировать пару десятков файлов, поправить кое-какие пути и делать это в полнолуние, то возможны ошибки
+              \end{itemize}
+        \item Автоматизация сборки
+              \begin{itemize}
+                  \item git clone
+                  \item одна консольная команда, которая всё делает за нас
+                  \item ...
+                  \item готовое к работе приложение
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Сборка вручную без IDE}
+
+    \begin{minted}{console}
+$ gcc main.c
+    \end{minted}
+    или, например,
+    \begin{minted}{console}
+$ gcc  -Wall -Wextra -pedantic -O2 -g -c lib1
+$ gcc  -Wall -Wextra -pedantic -O2 -g -c lib2
+$ gcc  -Wall -Wextra -pedantic -O2 -g -c lib3
+$ gcc  -Wall -Wextra -pedantic -O2 -g -lm lib1.o lib2.o lib3.o main.c ...
+    \end{minted}
+
+    \vspace{1em}
+
+    \begin{itemize}
+        \item Если проект большой, это быстро становится грустно
+        \item Десятки тысяч файлов --- не редкость
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{make}
+
+    \begin{itemize}
+        \item Стандарт де-факто по \enquote{низкоуровневым} правилам сборки
+        \item Сама ничего не знает про языки программирования, компиляторы и прочие подобные штуки
+        \item Знает про цели и зависимости целей
+              \begin{itemize}
+                  \item Сортирует граф целей
+                  \item Цели применяются в порядке от листьев к корню
+              \end{itemize}
+
+        \item Правила сборки описываются в Makefile
+    \end{itemize}
+
+    {\scriptsize Жаждущие подробностей могут посмотреть на слайды в конце презентации}
+\end{frame}
+
+\begin{frame}[fragile]{Пример}
+    Синтаксис:
+    \begin{minted}{make}
+target [target ...]: [component ...]
+    [command 1]
+    .
+    .
+    .
+    [command n]
+    \end{minted}
+
+    \vspace{1em}
+
+    Пример:
+    \begin{minted}{make}
+hello:
+    gcc -Wall -Wextra -pedantic -O2 hello.c -o hello
+    \end{minted}
+
+    Запуск:
+    \begin{minted}{console}
+$ make hello
+    \end{minted}
+\end{frame}
+
+
+\begin{frame}{Высокоуровневые системы сборки}
+    \begin{itemize}
+        \item Либо сами вызывают необходимые инструменты, либо генерируют Makefile
+        \item CMake
+              \begin{itemize}
+                  \item Кроссплатформенная система сборки, очень популярна в С и C++ open source-сообществе
+              \end{itemize}
+        \item Великое множество других (Bazel, MSBuild, qmake, SCons, Meson, ...)
+    \end{itemize}
+    Написание скриптов сборки для большого проекта --- отдельная и довольно трудоёмкая задача
+\end{frame}
+
+\begin{frame}{CMake}
+    \begin{itemize}
+        \item Декларативное описание сборки проекта
+              \begin{itemize}
+                  \item Указываем \textit{что} собирать, а не \textit{как} собирать
+              \end{itemize}
+        \item С открытым исходным кодом
+              \begin{itemize}
+                  \item \url{https://gitlab.kitware.com/cmake/cmake}
+              \end{itemize}
+        \item Прежде всего для сборки C++-проектов, но умеет много чего
+        \item Разрабатывается с 1999 года
+        \item Сама сборкой не занимается, генерирует конфиг для системы сборки
+              \begin{itemize}
+                  \item Но может сама их запускать
+              \end{itemize}
+        \item Пожалуй, основной способ сборки в VS Code (плагином CMake Tools)
+              \begin{itemize}
+                  \item Ctrl+Shift+P -> CMake: Quick Start
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Конфигурация CMake}
+    \begin{itemize}
+        \item CMakeLists.txt в корне проекта
+        \item Также могут быть в подкаталогах (для иерархичной конфигурации)
+        \item Бывают также модули (.cmake) и скрипты
+        \item Коммитить, соответственно, CMakeLists.txt (все) и .cmake, если есть
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Основные понятия}
+    \begin{itemize}
+        \item Команды
+              \begin{itemize}
+                  \item \mintinline{cmake}|command_name(список аргументов через пробел)|
+                  \item В CMake всё команды
+                  \item Всё строки
+              \end{itemize}
+        \item Переменные
+              \begin{itemize}
+                  \item \mintinline{cmake}|set(name value)|
+                  \item \mintinline{cmake}|message(STATUS "Name = ${name}")|
+                  \item Переменные окружения: \mintinline{cmake}|$ENV{Имя}|
+              \end{itemize}
+        \item Функции
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Цели}
+    \begin{itemize}
+        \item Исполняемые файлы
+              \begin{itemize}
+                  \item \mintinline{cmake}|add_executable(targetname source1 ...)|
+              \end{itemize}
+        \item Библиотеки
+              \begin{itemize}
+                  \item \mintinline{cmake}{add_library(targetname [STATIC | SHARED | ...] source1 ...)}
+              \end{itemize}
+        \item Линковка целей
+              \begin{itemize}
+                  \item \mintinline{cmake}{target_link_libraries(myLib [PUBLIC | PRIVATE | ...] dependencyLib)}
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Фазы сборки}
+    \begin{itemize}
+        \item Конфигурация
+              \begin{itemize}
+                  \item \mintinline{console}|$ cmake <путь до папки с CMakeLists.txt>|
+                  \item Читает CMakeLists.txt, строит модель, сохраняет в CMakeCache.txt
+                  \item Пытается угадать наличествующие инструменты и их возможности (например, поддерживаемую компилятором версию стандарта)
+                  \item Можно вручную подредактировать параметры конфигурации (руками или в cmake-gui)
+              \end{itemize}
+        \item Генерация --- генерация конфигов для сборки (например, Makefile)
+        \item Сборка
+              \begin{itemize}
+                  \item \mintinline{console}|$ cmake --build|
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Пример}
+    \begin{columns}
+        \begin{column}{0.65\linewidth}
+            \inputminted[fontsize=\small]{cmake}{cmake_example/CMakeLists.txt}
+        \end{column}
+        \begin{column}{0.30\linewidth}
+            \inputminted{text}{cmake_example/tree.txt}
+
+            \vspace{1em}
+
+            \begin{minted}{console}
+$ cmake . -B build
+$ cmake --build build
+$ ./build/main
+            \end{minted}
+        \end{column}
+    \end{columns}
+
+\end{frame}
+
+\begin{frame}[fragile]{Out-of-source-сборка}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{minted}{text}
+source/
+├── build
+│   └── сгенерированные файлы
+├── CMakeLists.txt
+└── исходники
+                \end{minted}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{minted}{text}
+build/
+└── сгенерированные файлы
+source/
+├── CMakeLists.txt
+└── исходники
+                \end{minted}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Что ещё умеет}
+    \begin{itemize}
+        \item Ветвления
+              \begin{itemize}
+                  \item Обычно на основе предопределённых переменных: \url{https://cmake.org/cmake/help/latest/manual/cmake-variables.7.html}
+              \end{itemize}
+        \item Конфигурации: Debug, Release, RelWithDebInfo, MinSizeRel
+              \begin{itemize}
+                  \item \mintinline{console}|$ cmake ../MyProject -DCMAKE_BUILD_TYPE=Debug|
+              \end{itemize}
+        \item Подпапки/подпроекты
+              \begin{itemize}
+                  \item \mintinline{cmake}|add_subdirectory(sourceDir ...)|
+              \end{itemize}
+        \item Toolchain-файлы
+        \item Скачивать исходники прямо в процессе сборки!
+              \begin{itemize}
+                  \item FetchContent
+                  \item См., например, \url{https://google.github.io/googletest/quickstart-cmake.html}
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Домашнее задание}
+
+    \textbf{Обязательное задание (4 балла):}
+
+    Перенести на CMake домашнее задание к 5 занятию (Продвинутый баланс скобок и Сортировочная станция)
+
+    \vspace{1em}
+
+    \textbf{Дополнительные задания (не входят в общий зачёт):}
+
+    Перенести остальные домашние работы на CMake (1 балл за каждую домашку)
+
+\end{frame}
+
+\appendix
+
+\begin{frame}
+    \frametitle{Ещё слайды про make}
+
+    Далее несколько слайдов про make, которые не влезли в пару
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Как работает make}
+
+    make знает про цели, зависимости, временные штампы и правила
+    \begin{itemize}
+        \item Смотрит на зависимости цели, если у хоть одной временной штамп свежее цели, запускается правило для цели
+        \item В процессе цель может обновить свой временной штамп, что приведёт к исполнению правил для зависящих от неё целей
+        \item Цели и зависимости образуют направленный ациклический граф (DAG)
+        \item make выполняет топологическую сортировку графа зависимостей
+        \item Правила применяются в порядке от листьев к корню
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]{Продвинутые штуки}
+    \begin{itemize}
+        \item Переменные
+              \begin{itemize}
+                  \item \mintinline{make}|MACRO = definition|
+                  \item \mintinline{make}|NEW_MACRO = $(MACRO) - $(MACRO2)|
+                  \item Переопределение из командной строки
+                        \begin{itemize}
+                            \item \mintinline{console}|$ make MACRO=ololo|
+                        \end{itemize}
+              \end{itemize}
+        \item Параллельная сборка
+              \begin{itemize}
+                  \item \mintinline{console}|$ make -j8|
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Неявные правила (Implicit rules)}
+
+    \begin{itemize}
+        \item Способ описания общих правил
+        \item Пример:
+              \begin{minted}{make}
+%.txt : %.docx
+    pandoc $< -o $@
+                \end{minted}
+              Использование: \mintinline{console}|$ make test.txt|, при существовании \texttt{test.docx}
+        \item Реализованы для множества языков (C, C++, Pascal, Fortran, ...)
+        \item Можно собрать однофайловую программу на Си: \mintinline{console}|$ make main|
+        \item Или даже собрать небольшой проект из нескольких файлов:
+              \begin{minted}{make}
+CFLAGS += -Wall -Wextra -pedantic -O2 -g
+main : lib1.o lib2.o lib3.o
+        \end{minted}
+    \end{itemize}
+
+    Подробнее: \url{https://www.gnu.org/software/make/manual/make.html#Implicit-Rules}
+
+\end{frame}
+
+
+\end{document}
