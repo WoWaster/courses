@@ -177,7 +177,7 @@ int main(void) {
               \begin{itemize}
                   \item \texttt{run}~--- Запустить программу
                   \item \texttt{break <название> (b <название>)}~--- Установить точку останова
-                  \item \texttt{delete <название> (d <название>)}~--- Удалить точку останова
+                  \item \texttt{delete <номер> (d <номер>)}~--- Удалить точку останова
                   \item \texttt{step (s)}~--- Сделать шаг исполнения (step into)
                   \item \texttt{next (n)}~--- Сделать шаг исполнения, не заходя в функции (step over)
                   \item \texttt{continue (c)}~--- Продолжить исполнение
@@ -187,6 +187,20 @@ int main(void) {
               \end{itemize}
     \end{itemize}
 
+\end{frame}
+
+\begin{frame}
+    \frametitle{Домашнее задание}
+
+    Написать тесты к домашке \enquote{Сортированный список}.
+
+    Тесты должны запускаться по флагу \texttt{--test}, переданному исполняемому файлу.
+
+    Также можно настроить запуск тестов через ctest (см. \url{https://coderefinery.github.io/cmake-workshop/testing/})
+
+    Не забывайте проверять граничные случаи.
+
+    Предпочтительно сдавать в отдельной ветке.
 \end{frame}
 
 \end{document}
