@@ -1,0 +1,160 @@
+% !TEX TS-program = lualatex
+
+\documentclass[aspectratio=169, russian]{beamer}
+
+\input{../preamble.tex}
+
+% \usepackage{xurl}
+
+%%% Meta
+
+\title{Линтеры и санитайзеры}
+\subtitle{Или как стрелять себе в ногу чуть реже}
+\author{Николай Пономарев}
+\date{10 ноября 2025 г.}
+\titlegraphic{\includegraphics[height=1cm]{../фирменный блок_серый.pdf}}
+\subject{Статическая и динамическая проверка кода. Линтеры, санитайзеры, фреймворк valgrind и другие инструменты анализа кода.}
+
+\begin{document}
+
+\begin{frame}[plain, noframenumbering]
+    \titlepage
+\end{frame}
+
+\begin{frame}
+    \frametitle{Вспомним уже известное}
+
+    \begin{itemize}
+        \item Что такое линтеры?
+        \item Зачем они нужны?
+        \item А давайте покроем всё тестами!
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Анализ кода}
+
+    \begin{itemize}
+        \item<1-> Хотим искать ошибки в коде
+        \item<1-> Как это можно делать?
+        \item<2-> Тесты
+              \begin{itemize}
+                  \item Призваны \enquote{ловить} ошибки в логике
+                  \item Сложно ловить \enquote{системные} ошибки, вроде работы с памятью
+              \end{itemize}
+        \item<3-> Статически~--- без запуска кода
+              \begin{itemize}
+                  \item Статические анализаторы
+                  \item Линтер~--- частный случай статического анализатора
+                  \item Современные компиляторы подрабатывают статическими анализаторами
+              \end{itemize}
+        \item<3-> Динамически~--- во время исполнения
+              \begin{itemize}
+                  \item Динамические анализаторы
+              \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{clang-tidy}
+
+    clang-tidy\footnote{Страница: \url{https://clang.llvm.org/extra/clang-tidy/}}~--- линтер для C/C++ на основе экосистемы LLVM
+    \begin{itemize}
+        \item Требует информации о том, как собирался проект
+              \begin{itemize}
+                  \item Конфигурируйте CMake c флагом \texttt{-DCMAKE\_EXPORT\_COMPILE\_COMMANDS=ON}
+              \end{itemize}
+        \item Поддерживает как проверки вида \enquote{предупреждения компилятора} (в частности clang), так и отдельные проверки, например
+              \begin{itemize}
+                  \item вызовы \mintinline{c}|memset(ptr, 0, n * sizeof(ptr))| вместо \mintinline{c}|memset(ptr, 0, n * sizeof(*ptr))|
+                  \item использование магических констант
+                  \item правильное использование нейминга
+              \end{itemize}
+        \item Пример использования (в основном в CI)
+              \begin{itemize}
+                  \item \url{https://github.com/WoWaster/spbu-c-ci-example}
+              \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Sanitizers}
+
+    \begin{definition}
+        Инструментирование~--- модификация (исходного или бинарного) кода программы с целью дальнейшего проведения анализа
+    \end{definition}
+
+    \vspace{1em}
+
+    Sanitizers (санитайзеры)\footnote{Репозиторий: \url{https://github.com/google/sanitizers}}~--- набор динамических анализаторов, разработанный Google
+
+    \begin{itemize}
+        \item Инструментирование программы на этапе компиляции
+        \item Довольно сложно устроены для рассказа сейчас
+              \begin{itemize}
+                  \item Подробности можно найти в wiki репозитория
+                  \item В видео: \url{https://youtu.be/7WyBAUJ8UA8}
+              \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Виды санитайзеров}
+
+    \begin{description}
+        \item[ASan] находит ошибки работы с памятью: выход за границы массива, use-after-free, double free
+              \begin{itemize}
+                  \item В среднем замедляет программу в 2 раза
+              \end{itemize}
+        \item[MSan] находит использование неинициализированной памяти
+              \begin{itemize}
+                  \item В среднем замедляет программу в 3 раза
+              \end{itemize}
+        \item[UBSan] находит ошибки, связанные с undefined behavior
+              \begin{itemize}
+                  \item Работает на этапе компиляции, поэтому \enquote{бесплатный}
+                  \item Есть опциональная библиотека времени исполнения \enquote{немного влияющая на скорость исполнения}
+              \end{itemize}
+        \item[LSan] находит утечки памяти
+              \begin{itemize}
+                  \item Отрабатывает перед завершением программы, поэтому почти \enquote{бесплатный}
+              \end{itemize}
+        \item[другие] ThreadSanitizer, DataFlowSanitizer, TypeSanitizer, RealtimeSanitizer
+    \end{description}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Valgrind}
+
+    Valgrind\footnote{Сайт: \url{https://valgrind.org/}}~--- фреймворк для создания динамических анализаторов, а также набор инструментов
+
+    \begin{itemize}
+        \item Не требует пересборки программы, но лучше иметь отладочную информацию
+        \item Программа исполняется на \enquote{виртуальном} процессоре, что позволяет собирать огромное количество разной информации о программе
+    \end{itemize}
+
+    \vspace{1em}
+
+    Наиболее интересный нам инструмент~--- Memcheck, который позволяет отлавливать ошибки работы с памятью
+
+    Замедляет программу в 10--30 раз
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Практика}
+
+    Разберём примеры отсюда: \url{https://github.com/spbu-coding-2025/workshop-analyzers}
+
+    \vspace{1em}
+
+    Посмотрим на то, как добавить себе clang-format и clang-tidy в репозиторий: \url{https://github.com/WoWaster/spbu-c-ci-example}
+
+\end{frame}
+
+\end{document}
