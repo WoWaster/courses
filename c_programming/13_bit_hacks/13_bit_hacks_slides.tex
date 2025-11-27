@@ -1,0 +1,361 @@
+% !TEX TS-program = lualatex
+
+\documentclass[aspectratio=169, russian]{beamer}
+
+\input{../preamble.tex}
+
+% \usepackage{xurl}
+
+%%% Meta
+
+\title{Битовые операции}
+\author{Николай Пономарев}
+\date{24 ноября 2025 г.}
+\titlegraphic{\includegraphics[height=1cm]{../фирменный блок_серый.pdf}}
+\subject{Биты, байты, переменные, адреса. Битовые операции: конъюнкция, дизъюнкция, отрицание, «исключающее или». Применение битовых операций в задачах: умножение и деление на два, контрольно-восстановительная сумма через операцию «исключающее или» и др. Битовые маски.}
+
+\begin{document}
+
+\begin{frame}[plain, noframenumbering]
+    \titlepage
+\end{frame}
+
+\begin{frame}
+    \frametitle{Типы операций}
+
+    \begin{itemize}
+        \item Логические операции: \mintinline{c}{a && b, a || b}, ...
+        \item Битовые операции: \mintinline{c}{a & b, a | b}, ...
+        \item Таблицы истинности для них одинаковы
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Инверсия}
+
+    \textasciitilde A (логическое \enquote{НЕ}; NOT)
+
+    \vspace{1em}
+
+    \begin{columns}
+        \begin{column}{0.45\linewidth}
+            \begin{tabular}{@{}lc@{}}
+                \toprule
+                A & \textasciitilde A \\
+                \midrule
+                0 & 1                 \\
+                1 & 0
+            \end{tabular}
+        \end{column}
+        \begin{column}{0.45\linewidth}
+            \begin{tabular}{@{}l}
+                100010101110 \\ \midrule
+                011101010001
+            \end{tabular}
+        \end{column}
+    \end{columns}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Конъюнкция}
+
+    A \& B (Логическое \enquote{И}; AND)
+
+    \vspace{1em}
+
+    \begin{columns}
+        \begin{column}{0.45\linewidth}
+            \begin{tabular}{@{}llc@{}}
+                \toprule
+                A & B & A \& B \\
+                \midrule
+                0 & 0 & 0      \\
+                0 & 1 & 0      \\
+                1 & 0 & 0      \\
+                1 & 1 & 1
+            \end{tabular}
+        \end{column}
+        \begin{column}{0.45\linewidth}
+            \begin{tabular}{@{}l}
+                100010101110 \\
+                110101110100 \\ \midrule
+                100000100100
+            \end{tabular}
+        \end{column}
+    \end{columns}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Дизъюнкция}
+
+    A | B (Логическое \enquote{ИЛИ}; OR)
+
+    \vspace{1em}
+
+    \begin{columns}
+        \begin{column}{0.45\linewidth}
+            \begin{tabular}{@{}llc@{}}
+                \toprule
+                A & B & A | B \\
+                \midrule
+                0 & 0 & 0     \\
+                0 & 1 & 1     \\
+                1 & 0 & 1     \\
+                1 & 1 & 1
+            \end{tabular}
+        \end{column}
+        \begin{column}{0.45\linewidth}
+            \begin{tabular}{@{}l}
+                100010101110 \\
+                110101110100 \\ \midrule
+                110111111110
+            \end{tabular}
+        \end{column}
+    \end{columns}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Строгая дизъюнкция}
+
+    A \textasciicircum{} B (Исключающее \enquote{ИЛИ}; XOR)
+
+    \vspace{1em}
+
+    \begin{columns}
+        \begin{column}{0.45\linewidth}
+            \begin{tabular}{@{}llc@{}}
+                \toprule
+                A & B & A \textasciicircum{} B \\
+                \midrule
+                0 & 0 & 0                      \\
+                0 & 1 & 1                      \\
+                1 & 0 & 1                      \\
+                1 & 1 & 0
+            \end{tabular}
+        \end{column}
+        \begin{column}{0.45\linewidth}
+            \begin{tabular}{@{}l}
+                100010101110 \\
+                110101110100 \\ \midrule
+                010111011010
+            \end{tabular}
+        \end{column}
+    \end{columns}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Логический сдвиг влево}
+
+    << n
+
+    \textbf{Пример: } \alert{11}100101 << 2 = 100101\alert{00}
+
+    1 << 8 = ?
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Логический сдвиг вправо}
+
+    >> n
+
+    \textbf{Пример: } 01011\alert{011} >> 3 = \alert{000}01011
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Другие сдвиги}
+
+    \begin{itemize}
+        \item Циклический
+        \item Арифметический
+              \begin{itemize}
+                  \item влево: как логический
+                  \item вправо: все биты сдвигаются вправо, а на освободившееся место размножается знаковый бит
+              \end{itemize}
+              \textbf{Пример: } \alert{1}001011\alert{1} >> 1 = \alert{1}1001011
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{А что, если...}
+
+    \begin{enumerate}
+        \item Сдвинуть на 0 бит? Ничего
+        \item Сдвинуть на отрицательное число бит?
+        \item Сдвинуть на число битов большее, чем есть в слове?
+    \end{enumerate}
+
+\end{frame}
+
+\begin{frame}[plain]
+
+    \begin{center}
+        \includegraphics[width=0.9\linewidth]{spec.pdf}
+    \end{center}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Свойства XOR}
+
+    \begin{enumerate}
+        \item A \textasciicircum{} A = 0
+        \item A \textasciicircum{} 0 = A
+    \end{enumerate}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Помехоустойчивое кодирование}
+
+    X$_1$ \textasciicircum{} X$_2$ \textasciicircum{} X$_3$ = X$_4$
+
+    \vspace{1em}
+
+    Дано: X$_2$, X$_3$, X$_4$
+
+    X$_1$ = ?
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Порядок вычислений}
+
+    \begin{minted}{c}
+false && func1() && func2()
+
+0 & func1() & func2()
+
+false & func1() & func2()
+    \end{minted}
+
+    \begin{enumerate}
+        \item Каковы условия корректности выражений?
+        \item Будут ли вычисляться значения функций в каждом из случаев?
+    \end{enumerate}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Битовые маски}
+
+    \textbf{Пример:}
+
+    IP адреса: 192.168.1.42/24
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Битовые маски}
+
+    \textbf{Пример:}
+
+    Выделение битов контрольной суммы:
+
+    \begin{minted}{c}
+bit_i = (a >> i) & 1;
+bit_ij = ...;
+    \end{minted}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Задача из практики}
+
+    Эмуляция удаления из списка
+
+    Из [1, 2, 3, 4, 5, 6] хотим получить [1, 3, 5] не удаляя элементы из исходного списка
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Задача на битовые хаки}
+
+    \textbf{Задача:} Проверить, является ли значение переменной x типа \mintinline{c}|long long| степенью двойки.
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Вариант 1}
+
+    \begin{minted}{c}
+bool check(long long x)
+{
+    while (x != 1) {
+        if (x % 2 == 1)
+            return false;
+        x = x / 2;
+    }
+    return true;
+}
+    \end{minted}
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Вариант 2}
+
+    \begin{minted}{c}
+bool check(long long x)
+{
+    double y = log2(x);
+    return ((int)y == y);
+}
+    \end{minted}
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Вариант 3}
+
+    \begin{minted}{c}
+bool check(long long x)
+{
+    return x & (x - 1) == 0;
+}
+    \end{minted}
+
+    \vspace{1em}
+
+    \begin{tabular}{rr}
+        x =   & 01001\alert{1}0 \\
+        x-1 = & 0100101         \\
+        \midrule
+        \& =  & 01001\alert{0}0
+    \end{tabular}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Выводы}
+
+    Битовые операции
+    \begin{itemize}
+        \item Повышают производительность, и иногда значительно
+        \item Лежат в основе многих стандартных методов
+        \item Внедряются компиляторами при оптимизации
+        \item Снижают читаемость кода
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Потенциально рекомендуемая литература}
+
+    Henry Warren \enquote{Hacker's delight}
+
+    \begin{itemize}
+        \item Пример про степень двойки взят оттуда
+        \item Там же огромное количество других трюков с битами
+        \item В книге около 500 страниц, поэтому её слегка страшно рекомендовать в 1 семестре
+    \end{itemize}
+
+\end{frame}
+
+\end{document}
