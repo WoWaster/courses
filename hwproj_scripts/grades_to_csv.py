@@ -45,10 +45,14 @@ for student in stats:
             task_descr = next(
                 filter(lambda t: t["id"] == task["id"], hw_descr["tasks"])
             )
-            if len(task["solution"]) == 0:
+            checked_solutions = list(
+                filter(lambda s: s["state"] != 0, task["solution"])
+            )
+            if len(checked_solutions) == 0:
                 ratings.append("0")
                 continue
-            ratings.append(f"{task['solution'][-1]['rating']}")
+
+            ratings.append(f"{checked_solutions[-1]['rating']}")
 
         if "Контрольная работа" in hw_descr["tags"]:
             control_ratings += ratings
