@@ -1,0 +1,376 @@
+% !TEX TS-program = lualatex
+
+\documentclass[aspectratio=169, russian]{beamer}
+
+\input{../preamble.tex}
+
+\usepackage{xurl}
+\usepackage{outlines}
+
+%%% Meta
+
+\title{Файлы и память}
+\author{Николай Пономарев}
+\date{14 февраля 2026 г.}
+\titlegraphic{\includegraphics[height=1cm]{../фирменный блок_серый.pdf}}
+\subject{Структуры, указатели, модули и файлы. Общие правила разбиения на модули, модули в C. }
+
+\begin{document}
+
+\begin{frame}[plain, noframenumbering]
+    \titlepage
+\end{frame}
+
+\section{Введение}
+
+\begin{frame}
+    \frametitle{Формальные вопросы}
+    \begin{outline}
+        \1 Занятия по субботам на второй и третьей паре в 3248
+        \2 В расписании так и останется 3389
+        \1 Курс на HwProj: \url{https://hwproj.ru/courses/50069}
+        \1 Будут три контрольные, на 4-й паре
+        \1 Будут \enquote{Летучки}
+        \1 В конце курса будут доклады
+        \1 \emph{Конец курса в начале апреля!}
+        \2 Зачёт будет прямо посреди семестра!
+        \1 Каждую неделю будут выбираться несколько \emph{счастливчиков}, которые будут сдавать домашние работы вживую
+        \2 Подозрительный на творчество БЯМ код увеличивает шансы быть избранным
+    \end{outline}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Критерии оценивания}
+    \begin{outline}
+        \1 Баллы:
+        \2 За домашки (их будет мало, но объёмные)
+        \2 За контрольные --- выбирается две лучшие попытки из трёх
+        \3 Плюс переписывания на зачёте, пересдаче, комиссии
+        \1 Итоговый балл за домашки: $MAX(0, (\frac{n}{N}\ –\ 0.6)) * 2.5 * 100$
+        \2 Примерно 50 баллов максимум за обязательные домашние работы
+        \1 Летучки дают дополнительные баллы к домашке (максимум где-то три балла за каждую), которые не считаются в максимум
+        \1 Доклады также дают дополнительные баллы (примерно 5), но они достанутся только наиболее обречённым
+        \1 Есть дедлайны (минус балл к максимуму за каждую неделю просрочки, но не больше половины баллов)
+        \1 В качестве итогового берётся \textbf{минимум} из баллов за домашние работы и контрольные
+    \end{outline}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Примерные баллы}
+
+    \begin{center}
+        \begin{tabular}{ccc}
+            \toprule
+            Балл за домашку & Балл за контрольные & Оценка ECTS  \\ \midrule
+            48-50           & 18-20               & A            \\ \midrule
+            46-47           & 16-17               & B            \\ \midrule
+            44-45           & 14-15               & C            \\ \midrule
+            43-44           & 12-13               & D            \\ \midrule
+            40-42           & 10-11               & E            \\ \midrule
+            0-39            & 0-9                 & на пересдачу \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Что будет в курсе}
+    \begin{outline}
+        \1 Алгоритмы и структуры данных
+        \2 Деревья, деревья поиска, самобалансирующиеся деревья
+        \2 Графы
+        \2 Формальные языки, автоматы и лексический анализ
+        \2 Немного больше про сортировки
+        \1 Системное программирование
+        \2 Немного про то, что, судя по зачёту, не очень зашло на \enquote{Информатике}: файлы, память, функции ОС и как этим пользоваться в программах
+        \2 Профиляторы, Perf
+    \end{outline}
+    Сначала будет просто, потом тяжело, потом снова просто
+\end{frame}
+
+\section{Летучка}
+
+\begin{frame}
+
+    \begin{center}
+        \LARGE
+
+        \structure{Внезапная летучка}
+
+        \vspace{1em}
+
+        \Large
+        Доставайте листочки и ручки
+    \end{center}
+
+\end{frame}
+
+\begin{frame}{Внезапная летучка}
+    \begin{enumerate}
+        \item Напишите команду для того, чтобы получить исполняемый файл \enquote{executable} из программы в файле \enquote{program.c}
+        \item Что должно и чего не должно быть в файле с расширением .h? Зачем они нужны?
+        \item Напишите функцию, которая принимает массив чисел и его размер и возвращает новый массив, состоящий из квадратов чисел исходного массива
+    \end{enumerate}
+    \vspace{1cm}
+    \begin{outline}
+        \1 Время: 10 минут
+        \1 Писать и сдавать ручкой на листочке
+        \2 Не забудьте подписать
+        \1 Максимум 3 балла в плюс к домашкам
+    \end{outline}
+\end{frame}
+
+\section{Работа с файлами}
+
+\begin{frame}
+    \frametitle{Файлы}
+    \begin{outline}
+        \1 Последовательность байтов на диске
+        \2 Бывают \enquote{сырые} и \enquote{текстовые}
+        \3 Самому файлу всё равно, это лишь способы интерпретации его содержимого
+        \2 Режимы доступа: r, w, a, r+, w+, a+
+        \2 Курсор
+        \2 EOF
+        \1 Функции для работы с файлами:
+        \2 fopen, fclose, fprintf, fscanf, fseek, ftell, fgets
+        \1 Файлы надо не забывать закрывать
+    \end{outline}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Пример, как писать в файл}
+    \begin{minted}{cpp}
+int main() {
+    FILE* out = fopen("ololo.txt", "w");
+    if (out == NULL) {
+        return -1;
+    }
+    fwrite("Ololo\n", sizeof(char), 6, out);
+    fprintf(out, "%s", "Ololo");
+    fclose(out);
+    return 0;
+}
+        \end{minted}
+    \begin{outline}
+        \1 stdin/stdout --- это тоже файлы
+    \end{outline}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Пример, как читать из файла}
+    \begin{scriptsize}
+        \begin{minted}{cpp}
+#include <stdio.h>
+
+int main() {
+    FILE *file = fopen("test.txt", "r");
+    if (file == NULL) {
+        printf("file not found!");
+        return 1;
+    }
+    char *data[100] = {0};
+    int linesRead = 0;
+    while (!feof(file)) {
+        char *buffer = malloc(sizeof(char) * 100);
+        const int readBytes = fscanf(file, "%s", buffer);
+        if (readBytes < 0) {
+            break;
+        }
+        data[linesRead] = buffer;
+        ++linesRead;
+    }
+    fclose(file);
+    ...
+}
+
+            \end{minted}
+    \end{scriptsize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Тонкости}
+    \begin{outline}
+        \1 Чтение строки целиком: \mintinline{cpp}|fscanf(file, "|\%\mintinline{cpp}|[^\n]", buffer);|
+        \1 Или: \mintinline{cpp}|fgets(buffer, sizeof(buffer), file);|
+        \1 Working directory
+        \2 Обычно Ваша текущая директория в терминале
+        \1 Работать с файлом как с массивом элементов некоторого типа может быть удобно
+        \2 Можно отобразить файл в память
+        \2 В Linux читать man 2 mmap (или info mmap)
+    \end{outline}
+\end{frame}
+
+\section{Напоминание про модули}
+
+\begin{frame}[fragile]
+    \frametitle{Модули}
+    \begin{outline}
+        \1 Способ группировки кода в логически обособленные группы
+        \1 В C это реализуется с помощью заголовочных файлов и файлов с реализацией
+        \2 .h и .c
+        \1 В отдельный модуль выносятся объявления типов данных и функции, которые делают одно дело
+        \2 Например, разные функции сортировки
+        \2 Или всё для работы с матрицами
+        \1 В интерфейсную часть модуля выносится только то, что может использовать другой код
+        \2 Меньше знаешь --- крепче спишь
+        \1 Функции, используемые только для реализации, пишутся только в .c-файле
+        \2 Например, функция разделения массива для быстрой сортировки или swap
+    \end{outline}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Модули}
+    \begin{scriptsize}
+        Заголовочный файл:
+        \begin{minted}{c}
+#pragma once
+
+// Комментарий к функции 1
+int function1(int x, int y);
+
+// Комментарий к функции 2
+void function2();
+            \end{minted}
+        .c-файл:
+        \begin{minted}{c}
+#include <имя заголовочного файла.h>
+
+#include <все остальные библиотеки>
+
+int function1(int x, int y)
+{
+    ...
+}
+
+void function2()
+{
+    ...
+}
+            \end{minted}
+    \end{scriptsize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Тонкости}
+    \begin{outline}
+        \1 Реализации функций в .h-файле писать нельзя
+        \2 Иначе будет беда, если один .h-ник подключат в два .c-шника
+        \2 Бывают прикольные исключения~--- header-only library
+        \1 Комментарии обязательны
+        \1 \#pragma once обязательна
+        \1 Подключать \enquote{свой} заголовочный файл в .c обязательно
+        \1 Файлы .h/.c всегда ходят парами, кроме файла с main
+    \end{outline}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Немного о терминологии}
+
+    \begin{itemize}
+        \item Формально в Си нет модулей
+        \item Есть~--- единицы трансляции (translation unit)
+              \begin{itemize}
+                  \item Обычно это .c после препроцессора, именно из них компилятор делает объектные файлы
+              \end{itemize}
+        \item Единица трансляции определяет область видимости
+              \begin{itemize}
+                  \item По-умолчанию все функции доступны извне (extern)
+                  \item Ключевое слово static у функции делает её невидимой для линковщика, его стоит использовать для внутренних функций
+              \end{itemize}
+        \item Осторожно: static многозначное ключевое слово
+    \end{itemize}
+
+\end{frame}
+
+\section{Системные вызовы}
+
+\begin{frame}
+    \frametitle{Системные вызовы}
+
+    \begin{itemize}
+        \item Способ обратиться к ОС, обычно для некоторого взаимодействия
+        \item Типичные системные вызовы:
+              \begin{itemize}
+                  \item Выделение памяти
+                  \item Запуск приложений
+                  \item Работа с файлами (открытие, чтение, запись, закрытие)
+                  \item Узнать системную информацию (время, ядро, на котором исполняемся)
+              \end{itemize}
+        \item Специфичны для ОС
+              \begin{itemize}
+                  \item Делает приложение непереносимым
+                  \item Для Linux читать man 2 syscalls (или info syscalls)
+              \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\section{Виртуальная память}
+
+\begin{frame}
+    \frametitle{Идея виртуальной памяти}
+
+    Проблема:
+    \begin{itemize}
+        \item Памяти мало, процессов много
+        \item Хотим удовлетворить всех с минимальными потерями для себя
+    \end{itemize}
+
+    Идея:
+    \begin{itemize}
+        \item Дадим каждому приложению собственное адресное пространство~--- виртуальную память
+        \item Отобрать виртуальную память в физическую заставим ОС
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Побочные эффекты}
+
+    \begin{itemize}
+        \item Каждое приложение получает свой непрерывный \enquote{массив байтов}, возможно даже большего размера, чем доступно физически
+        \item Возможность перемещать данный из сильно ограниченной RAM, например, на SSD
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Возможные определения}
+    \framesubtitle{По Я.А. Кириленко}
+
+    Виртуальная организация памяти~--- это процесс расширения логической памяти за пределы физической
+
+    \vspace{1em}
+
+    Виртуальная память~--- это техника, позволяющая исполнять процессы, которые могут находиться в памяти не полностью
+\end{frame}
+
+\begin{frame}
+    \frametitle{Страничная организация (при поддержке ЦПУ)}
+    \framesubtitle{По Я.А. Кириленко}
+
+    Страницы — это части, на которые разбивается пространство виртуальных адресов
+
+    Страницы всегда имеют фиксированный размер (часто 4 КиБ)
+
+    \begin{center}
+        \includegraphics[width=0.6\linewidth]{virt_mem.png}
+    \end{center}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Ещё одна красивая картинка}
+
+    Теперь с адресным пространством процесса.
+    Полезно, что мы не теряем память между стеком и кучей.%
+    \footnote{%
+        Картинка из неплохой статьи: \url{https://web.archive.org/web/20161210164858/http://jpauli.github.io/2015/04/16/segmentation-fault.html}\\
+        Или на русском: \url{https://habr.com/ru/companies/nix/articles/277759/}}
+
+    \begin{center}
+        \includegraphics[width=0.45\linewidth]{virt_mem2.png}
+    \end{center}
+
+\end{frame}
+
+\end{document}
