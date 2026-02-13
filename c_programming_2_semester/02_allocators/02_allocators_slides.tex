@@ -1,0 +1,594 @@
+% !TEX TS-program = lualatex
+
+\documentclass[aspectratio=169, russian]{beamer}
+
+\input{../preamble.tex}
+
+\usepackage{xurl}
+\usepackage{outlines}
+
+%%% Meta
+
+\title{Аллокаторы}
+\author{Николай Пономарев}
+\date{14 февраля 2026 г.}
+\titlegraphic{\includegraphics[height=1cm]{../фирменный блок_серый.pdf}}
+% TODO: Соглашения о вызовах.
+\subject{Понятие процесса. Ввод-вывод stdio.h. Файловый ввод-вывод: буферизованный, файлы, отображаемые на память. Работа с динамической памятью. Виртуальная память. Внутреннее устройство аллокаторов динамической памяти.  Системные вызов}
+
+\begin{document}
+
+\begin{frame}[plain, noframenumbering]
+    \titlepage
+\end{frame}
+
+\section{Аллокаторы}
+
+\begin{frame}{А теперь системное программирование}
+    \begin{itemize}
+        \item Вы уже имели дело с аллокаторами памяти
+        \item Они нужны, чтобы работать со структурами данных динамического размера
+        \item Аллокатор работает с кучей (heap)
+        \item Для аллокатора куча — множество блоков разного размера
+        \item Блок — непрерывный кусок виртуальной памяти, который может быть либо выделенным (allocated), либо свободным (free)
+        \item НУО предполагаем, что куча растет по увеличению количества адресов
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Какие бывают аллокаторы}
+    \begin{block}{Явные (Explicit)}
+        Программа явно освобождает выделенный блок \\
+        \texttt{malloc} и \texttt{free} в С, \texttt{new} и \texttt{delete} в C++ …
+    \end{block}
+
+    \begin{block}{Неявные (Implicit)}
+        Аллокатор сам берет на себя обнаружение и освобождение неиспользованных блоков \\
+        Сборщики мусора в Java, .NET, Lisp …
+    \end{block}
+
+    Мы будем говорить о явных
+\end{frame}
+
+\begin{frame}[fragile]{Напомним…}
+    \begin{minted}{c}
+void* malloc(size_t size)
+\end{minted}
+    \begin{itemize}
+        \item выделяет блок памяти размера не менее size
+        \item Return: указатель на выделенный блок или NULL в случае ошибки
+        \item Блок памяти обычно выравнивается (в Unix системах~--- по 8 байт)
+        \item Не занимается инициализацией! Для этого есть calloc
+        \item В рамках лекции считаем размер слова равным 4 байта
+    \end{itemize}
+
+    \begin{minted}{c}
+void free(*ptr)
+\end{minted}
+    \begin{itemize}
+        \item освобождает блок памяти, на который указывает ptr
+        \item ptr должен указывать на начало выделенного блока --- иначе UB
+              (если \texttt{NULL}, то ничего не произойдет)
+        \item \texttt{free} не сигнализирует об ошибке — с ним надо быть аккуратнее
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Как аллокатор может выделять память?}
+    \begin{itemize}
+        \item \texttt{mmap} и \texttt{munmap}
+              \begin{itemize}
+                  \item Отображение объекта в физической памяти в адресное пространство процесса
+                  \item \texttt{/proc/[pid]/maps} — показать отображенные участки памяти процесса
+              \end{itemize}
+        \item Управление размером кучи: \texttt{void* sbrk(intptr\_t incr)}
+              \begin{itemize}
+                  \item \texttt{brk} — указатель на конец кучи
+                  \item \texttt{sbrk} просто прибавляет \texttt{incr} к этому указателю
+                  \item Надо, чтобы запросить у ОС больше памяти в куче
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Требования к аллокатору}
+    \begin{itemize}
+        \item Последовательность запросов \texttt{malloc} и \texttt{free} — произвольная
+              \begin{itemize}
+                  \item Нельзя полагаться на порядок запросов
+                  \item Но мы предполагаем, что \texttt{free} вызывается на участке, который был выделен
+              \end{itemize}
+        \item Немедленный ответ на запрос
+              \begin{itemize}
+                  \item Нельзя буферизировать запросы или переупорядочивать
+              \end{itemize}
+        \item Используется только куча
+              \begin{itemize}
+                  \item Все нескалярные структуры данных, которыми пользуется аллокатор, должны лежать в куче
+              \end{itemize}
+        \item Выравнивание блоков
+              \begin{itemize}
+                  \item Нужно, чтобы в блоке могли размещаться данные любого типа
+                  \item В большинстве систем выравнивается по 8 байт
+              \end{itemize}
+        \item Нельзя модифицировать выделенные блоки
+              \begin{itemize}
+                  \item Можно манипулировать только свободными блоками
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Цели аллокатора}
+    \begin{block}{Максимизация пропускной способности (throughput)}
+        Количество запросов, выполняющихся в единицу времени \\
+        Нужно уменьшать среднее время на запрос к аллокатору
+    \end{block}
+
+    \begin{block}{Максимальная утилизация памяти (memory utilization)}
+        Полезная нагрузка (payload) — сколько памяти действительно было запрошено \\
+        Нам нужно максимизировать суммированную полезную нагрузку для всех запросов относительно размера кучи
+    \end{block}
+
+    Эти цели противоречат друг другу. Нужно искать баланс.
+\end{frame}
+
+\begin{frame}{Фрагментация}
+    Главная причина плохой утилизации кучи \\
+    Неиспользованная память не соответствует требованиям запросов аллокатора
+
+    \begin{block}{Внутренняя фрагментация}
+        \begin{itemize}
+            \item Выделили больше, чем было запрошено (больше, чем payload)
+            \item Минимальный размер блока
+            \item Выравнивание
+        \end{itemize}
+    \end{block}
+
+    \begin{block}{Внешняя фрагментация}
+        \begin{itemize}
+            \item В куче есть место, чтобы выделить память, но нет доступных свободных блоков
+            \item Зависит в том числе от будущих запросов
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Нюансы реализации}
+    Мы могли бы сделать простой аллокатор:
+    \begin{itemize}
+        \item Куча — массив с указателем p на начало
+        \item \texttt{malloc(size)}: увеличить указатель p на size, вернуть новый указатель
+        \item \texttt{free(ptr)}: просто return, ничего не делать
+    \end{itemize}
+
+    Что мы получили:
+    \begin{itemize}
+        \item Хорошая пропускная способность, все запросы за константу
+        \item Отвратительная утилизация памяти — не переиспользуем свободные блоки
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Нюансы реализации}
+    Если мы хотим добиться баланса между целями, нужно ответить на следующие вопросы:
+
+    \begin{itemize}
+        \item \textbf{Free block organization} — как отслеживать свободные блоки?
+        \item \textbf{Placement} — как выбрать свободный блок, куда мы будем аллоцировать?
+        \item \textbf{Splitting} — как только заняли свободный блок, что делать с оставшейся частью?
+        \item \textbf{Coalescing} — что делать с только что освобожденным блоком?
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Implicit Free List}
+    Как различать границы блоков и понимать, свободен блок или нет? \\
+    Будем хранить все нужное в самом блоке:
+
+    \begin{center}
+        \includegraphics[width=0.8\linewidth]{ifl1.png}
+    \end{center}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Как выглядит куча? (Free block organization)}
+    \begin{center}
+        \includegraphics[width=0.9\linewidth]{ifl2.png}
+    \end{center}
+
+    \begin{itemize}
+        \item Последовательность занятых и свободных блоков
+              \begin{itemize}
+                  \item Односвязный список свободных блоков
+              \end{itemize}
+        \item Время на операцию — линейное от количества \textbf{всех} блоков
+              \begin{itemize}
+                  \item Это недостаток, с которым в будущем будем бороться
+              \end{itemize}
+        \item Выравнивание
+              \begin{itemize}
+                  \item Появляется минимальный размер блока — 2 слова
+              \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Размещение выделенного блока (placement) I/II}
+    При запросе аллокации — поиск подходящего свободного блока. \\
+    А как искать? Есть разные \textbf{политики размещения}!
+
+    \begin{block}{first fit --- Берем первый попавшийся подходящего размера}
+        \begin{itemize}
+            \item Обычно свободные блоки побольше оказываются в конце списка
+            \item В начале свободные блоки меньше => поиск блока побольше займет больше времени
+        \end{itemize}
+    \end{block}
+
+    \begin{block}{next fit --- Начинаем поиск там, где закончился предыдущий}
+        \begin{itemize}
+            \item Есть вероятность, что следующий подходящий блок — остаток предыдущего
+            \item Может работать быстрее, чем first fit
+            \item Хуже утилизирует память
+        \end{itemize}
+    \end{block}
+
+\end{frame}
+
+\begin{frame}{Размещение выделенного блока (placement) II/II}
+    При запросе аллокации — поиск подходящего свободного блока. \\
+    А как искать? Есть разные \textbf{политики размещения}!
+
+    \begin{block}{best fit --- Перебираем все блоки и ищем подходящий с наименьшим размером}
+        \begin{itemize}
+            \item Лучше утилизирует память
+            \item Хуже по времени — бежим по всей куче
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}{Разделение свободных блоков (splitting)}
+    Нашли подходящий свободный блок — сколько надо занять?
+    \begin{itemize}
+        \item Можем весь блок — плохо. Внутренняя фрагментация
+        \item Можем делить на 2 части — выделенный блок и остаток
+    \end{itemize}
+
+    На примере — запрос на 3 слова:
+    \begin{center}
+        \includegraphics[width=0.9\linewidth]{splitting.png}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Получение дополнительной памяти в куче}
+    Что, если так и не нашли подходящий свободный блок?
+
+    \begin{enumerate}
+        \item Объединение свободных блоков (об этом дальше)
+        \item Если не сработало — просим у ОС больше памяти через \texttt{sbrk}
+        \item Превращаем новый кусок памяти в большой свободный блок
+        \item Вставляем блок в список и используем его для выделения
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Объединение свободных блоков (coalescing)}
+    При освобождении свободные блоки могут оказаться рядом:
+
+    \begin{center}
+        \includegraphics[width=0.9\linewidth]{coalescing.png}
+    \end{center}
+
+
+    \begin{itemize}
+        \item Получили \textbf{ложную фрагментацию}:
+              \begin{itemize}
+                  \item Запрос на 4 слова не выполнится, хотя место есть
+                  \item У нас два блока с payload = 3 слова
+              \end{itemize}
+        \item Блоки надо объединять
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Нюансы объединения}
+    Когда это можно делать?
+
+    \begin{block}{Сразу при запросе}
+        \begin{itemize}
+            \item Быстро
+            \item Может привести к лишним действиям
+        \end{itemize}
+    \end{block}
+
+    \begin{block}{Когда-то позже}
+        \begin{itemize}
+            \item Если не нашли свободный блок, например
+            \item Требует отдельного прохода по куче
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}{Нюансы объединения}
+    Допустим, освободили текущий блок
+    \begin{itemize}
+        \item Объединиться со следующим — легко за константное время
+        \item А как объединяться с предыдущим?
+        \item С текущей реализацией — только за линейное время от количества
+        \item Получаем довольно медленный free
+    \end{itemize}
+
+    Как добиться константы? \\
+    \textbf{Нам поможет Дональд Кнут!}
+\end{frame}
+
+\begin{frame}{Метод граничных маркеров}
+    Улучшим наш блок:
+
+    \begin{center}
+        \includegraphics[width=0.65\linewidth]{border_marker1.png}
+    \end{center}
+
+    Теперь можем получить размер предыдущего блока!
+\end{frame}
+
+\begin{frame}{Метод граничных маркеров --- случаи}
+    \begin{center}
+        \includegraphics[width=0.7\linewidth]{border_marker2.png}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Метод граничных маркеров}
+    \begin{itemize}
+        \item Получили константное время в каждом случае
+        \item Подход легко обобщить на разные типы аллокаторов
+        \item Тратим много памяти на header и footer
+        \item Можем оптимизировать:
+              \begin{itemize}
+                  \item Можем избавиться от футера у выделенных блоков
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Implicit Free Lists --- что получили?}
+    \begin{itemize}
+        \item Линейное время от количества всех блоков на аллокацию
+        \item Константное время на освобождение
+        \item Очень просто реализовать
+        \item Редко используется из-за скорости malloc, но при этом довольно в определенных случаях может подойти
+    \end{itemize}
+
+    Разделение и объединение может распространяться почти на все аллокаторы!
+\end{frame}
+
+\begin{frame}{Explicit Free List}
+    Строим \textbf{двусвязный список} из свободных блоков!
+
+    \begin{center}
+        \includegraphics[width=0.6\linewidth]{efl1.png}
+        \includegraphics[width=0.65\linewidth]{efl2.png}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Explicit Free List — аллокация блока}
+    Также, как в Implicit Free List \\
+    Опять же, политики размещения бывают разные!
+\end{frame}
+
+\begin{frame}{Explicit Free List — освобождение блока}
+    Зависит от \textbf{политики вставки в список}
+
+    \begin{block}{Last In First Out (LIFO) --- Вставляем новый блок в начало}
+        \begin{itemize}
+            \item free работает за константу
+        \end{itemize}
+    \end{block}
+
+    \begin{block}{Address order --- Блоки в списке упорядочены по адресам}
+        \begin{itemize}
+            \item free работает за линию — проходим по списку
+            \item trade-off: мы лучше утилизируем память: проход first fit приближается к best fit!
+        \end{itemize}
+    \end{block}
+
+    Граничные маркеры все еще нужны для объединения блоков
+\end{frame}
+
+\begin{frame}{Explicit Free List --- что получили?}
+    По сравнению с Implicit Free List:
+    \begin{itemize}
+        \item Улучшили время аллокации: линейное время от количества свободных блоков, а не от количества всех блоков
+        \item Нужно больше места на свободный блок, ведь мы храним указатели
+        \item Это может увеличивать внутреннюю фрагментацию!
+    \end{itemize}
+
+    Время на аллокацию можно еще улучшить!
+\end{frame}
+
+\begin{frame}{Segregated Free Lists}
+    Массив списков со свободными блоками определенных размеров
+
+    \begin{itemize}
+        \item Множество блоков разбиваем на классы по размерам
+        \item Политик того, как разбить блоки на классы — много
+              \begin{itemize}
+                  \item Можно по степеням двойки
+                  \item Можно маленькие размеры выделять в отдельные классы
+              \end{itemize}
+    \end{itemize}
+
+    \begin{center}
+        \includegraphics[width=0.6\linewidth]{sfl1.png}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Segregated Free Lists — аллокация и освобождение}
+    \textbf{Аллокация блока размера n:}
+    \begin{enumerate}
+        \item Ищем в списке свободных блоков подходящего класса
+        \item Если нашли свободный блок — выделяем
+        \item Разделить, а остаток поместить в нужный список --- опционально
+        \item Если не нашли, пробуем искать в списке блоков большего размера
+        \item Перебрали все списки и не нашли — что делать?
+              \begin{itemize}
+                  \item Просим больше памяти у ОС при помощи \texttt{sbrk()}
+                  \item Выделяем из новой памяти блок нужного размера
+                  \item Остаток выделяем в отдельный блок и вставляем в нужный список
+              \end{itemize}
+    \end{enumerate}
+
+    \textbf{Освобождение блока:}
+    \begin{itemize}
+        \item Вставка блока в нужный список
+        \item Можем объединять блоки со вставкой в нужный список — опционально
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Segregated Free Lists --- что мы уже получили?}
+    \begin{itemize}
+        \item Время на запрос стало ниже
+        \item Теперь исследуем не всю кучу, а какую-то часть
+        \item Лучше используем память
+        \item Проход с политикой first fit приближает best fit
+    \end{itemize}
+
+    То, что мы сейчас описали — концепция. Рассмотрим более конкретные реализации.
+\end{frame}
+
+\begin{frame}{Simple Segregated Storage}
+    Каждый список хранит блоки одного размера \\
+    Пример: размеры \{17-32\} — округляем до 32
+
+    \textbf{Выделение блока:}
+    \begin{itemize}
+        \item Смотрим нужный список. Если не пуст — берем первый блок. Не разделяем.
+        \item Список пуст — запрашиваем у ОС кусок памяти, и делим его на блоки нужного размера, теперь список не пуст.
+    \end{itemize}
+
+    \textbf{Освобождение:}
+    \begin{itemize}
+        \item Вставляем новый свободный блок в начало нужного списка
+        \item Никакого объединения
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Simple Segregated Storage --- что получили?}
+    \begin{itemize}
+        \item \texttt{malloc} и \texttt{free} за константное время --- круто!
+        \item Уменьшили минимальный размер блока
+              \begin{itemize}
+                  \item Нам нужен только указатель на следующий блок
+              \end{itemize}
+        \item Страдаем от внутренней фрагментации
+              \begin{itemize}
+                  \item Не разделяем же блоки
+              \end{itemize}
+        \item Страдаем от внешней фрагментации
+              \begin{itemize}
+                  \item Есть конкретные сценарии
+                  \item Много запросов на размер 1, много запросов на размер 2 …
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Segregated Fits}
+    \begin{itemize}
+        \item Каждый список — явный или неявный (как описывалось ранее)
+              \begin{itemize}
+                  \item В списке — блоки разных размеров!
+              \end{itemize}
+    \end{itemize}
+
+    \textbf{Выделение блока:}
+    \begin{enumerate}
+        \item Бежим по нужному списку по политике first fit
+        \item Нашли — делим, остаток отправляем в нужный список
+        \item Не нашли — ищем в списке класса больших размеров
+        \item Перебрали все списки? Просим памяти у ОС, выделяем нужный блок, остаток — помещаем в нужный список
+    \end{enumerate}
+
+    \textbf{Освобождение блока:}
+    \begin{itemize}
+        \item Объединяем блоки и результат отправляем в нужный список
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Segregated Fits --- что получили?}
+    \begin{itemize}
+        \item Поиск не по всей куче, а по ее части
+        \item first fit здесь приближается к best fit по всей куче
+        \item \textbf{Популярный подход}
+              \begin{itemize}
+                  \item Используется в пакете malloc стандартной библиотеки Си
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Двоичные близнецы}
+    \begin{itemize}
+        \item Segregated Fits, только каждый класс — степень двойки
+              \begin{itemize}
+                  \item Округляем размеры
+              \end{itemize}
+        \item Пусть в куче $2^m$ слов
+        \item Держим список для блоков размеров $2^k$, $0 \leq k \leq m$
+        \item Изначально у нас один блок размером $2^m$
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Двоичные близнецы — выделение блока}
+    Допустим, хотим выделить блок размером $2^k$
+
+    \begin{enumerate}
+        \item Надо найти первый доступный блок размером $2^j$, $k \leq j \leq m$
+        \item Рекурсивно:
+              \begin{itemize}
+                  \item Если $j = k$ — закончили
+                  \item Если нет — рекурсивно делим блок пополам, пока $j$ не станет равным $k$
+              \end{itemize}
+        \item При делении оставшуюся часть (близнеца) отправляем в нужный список
+    \end{enumerate}
+
+    Пример — минимальный размер блока — 64 К, запросили 34 К
+
+    \begin{center}
+        \includegraphics[width=1\linewidth]{bin_twins1.png}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Двоичные близнецы — освобождение блока}
+    Объединяем блоки, пока не дойдем до близнеца
+
+    Пример: освобождаем блок D
+    \begin{center}
+        \includegraphics[width=1\linewidth]{bin_twins2.png}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Двоичные близнецы — что получили?}
+    \begin{itemize}
+        \item Быстрый поиск и объединение
+        \item Знаем адрес и размер блока — легко посчитать адрес близнеца
+              \begin{itemize}
+                  \item xxx…x00000 — адрес блока размером 32 байта
+                  \item xxx…x10000 — адрес близнеца
+                  \item Отличие в одном бите!
+              \end{itemize}
+        \item Страдаем от внутренней фрагментации
+        \item Может подойти, когда размеры выделенных блоков известны и они близки к степеням двойки
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Итог}
+    Разных аллокаторов много — и они нужны:
+    \begin{itemize}
+        \item Разным вариантам ОС
+        \item СУБД
+        \item Реализациям языков программирования
+        \item Разным программам на Си
+    \end{itemize}
+
+    Здесь рассмотрена только малая часть, их гораздо больше
+\end{frame}
+
+\begin{frame}
+    \frametitle{Благодарности}
+
+    Рассказ про виртуальную память основан на материалах Я.А. Кириленко
+
+    Рассказ про аллокаторы~--- перевёрстан в \LaTeX{} из презентации В.А. Кутуева
+
+\end{frame}
+
+\end{document}
