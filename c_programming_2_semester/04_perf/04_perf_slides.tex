@@ -303,7 +303,7 @@ $ perf stat ./row       # -O0!
 
 \begin{frame}{Что оптимизировать и в каком порядке}
     \begin{enumerate}
-        \item \textbf{Компилятор} (\texttt{-O2}, \texttt{-O3})
+        \item \textbf{Компилятор} (\texttt{-O2}, \texttt{-O3}, \texttt{-march=<...>})
               \begin{itemize}
                   \item Бесплатно, включайте всегда
                   \item Loop unrolling, инлайнинг, векторизация
