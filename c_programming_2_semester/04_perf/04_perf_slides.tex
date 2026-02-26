@@ -12,9 +12,9 @@
 \title{Профилирование производительности}
 \subtitle{perf tools}
 \author{Николай Пономарев}
-\date{14 февраля 2026 г.}
+\date{28 февраля 2026 г.}
 \titlegraphic{\includegraphics[height=1cm]{../фирменный блок_серый.pdf}}
-\subject{Внутреннее устройство аллокаторов динамической памяти.}
+\subject{Использование инструментов сбора и анализа данных о производительности на примере perf tools.  }
 
 \begin{document}
 
@@ -99,16 +99,17 @@
     \texttt{double a[M][N]} в C хранится строка за строкой (row-major):
 
     \bigskip
-    % TODO: Отступы!
     \begin{center}
         \ttfamily\small
-        \begin{tabular}{|c|c|c|c|c|c|c|c|}
-            \hline
-            a[0][0]                                  & a[0][1]                                 & a[0][2] & a[0][3] & a[1][0] & a[1][1] & a[1][2] & \ldots \\
-            \hline
-            \multicolumn{4}{|c|}{\rmfamily строка 0} & \multicolumn{4}{c|}{\rmfamily строка 1}                                                            \\
-            \hline
-        \end{tabular}
+        {\renewcommand{\arraystretch}{1.2}
+            \begin{tabular}{|c|c|c|c|c|c|c|c|}
+                \hline
+                a[0][0]                                  & a[0][1]                                 & a[0][2] & a[0][3] & a[1][0] & a[1][1] & a[1][2] & \ldots \\
+                \hline
+                \multicolumn{4}{|c|}{\rmfamily строка 0} & \multicolumn{4}{c|}{\rmfamily строка 1}                                                            \\
+                \hline
+            \end{tabular}
+        }
     \end{center}
 
     \bigskip
@@ -201,7 +202,7 @@ $ /usr/bin/time ./col
     \begin{itemize}
         \item Просто \texttt{time} может быть встроенной функцией оболочки
         \item Строго говоря, измерения~--- отдельная наука, об этом расскажут
-        \item Начать упрощать себе жизнь можно с hyperfine % TODO: URL!
+        \item Начать упрощать себе жизнь можно с hyperfine: \url{https://github.com/sharkdp/hyperfine}
     \end{itemize}
 
 \end{frame}
@@ -260,7 +261,7 @@ $ perf script | stackcollapse-perf.pl | flamegraph.pl > out.svg
     \bigskip
     \begin{itemize}
         \item Скрипты: \url{https://github.com/brendangregg/FlameGraph}
-        \item Современный вариант без perl: \texttt{inferno} (Rust)
+        \item Современный вариант без Perl: \texttt{inferno} (Rust)
     \end{itemize}
 \end{frame}
 
