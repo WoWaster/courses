@@ -441,7 +441,7 @@ CI запускает всё с нуля и *не даёт обманывать 
 
 = TDD (Test-Driven Development)
 
-== Принцип TDD
+== Принцип #link("https://en.wikipedia.org/wiki/Test-driven_development")[TDD]
 
 Тесты пишутся *до* реализации:
 
